@@ -39,6 +39,17 @@ vector<Token> tokenizer(string input) {
       continue;
     }
 
+    if (regex_match(curr_char, regex("[a-z]"))) {
+      string value;
+      while (regex_match(curr_char, regex("[a-z]"))) {
+        value += curr_char;
+        curr_char = string(1, input[++current]);
+      }
+
+      tokens.push_back(Token("name", value));
+      continue;
+    }
+
     ++current;
   }
 
@@ -46,7 +57,7 @@ vector<Token> tokenizer(string input) {
 }
 
 int main() {
-  vector<Token> tokens = tokenizer("(1 )");
+  vector<Token> tokens = tokenizer("(hello 1 )");
 
   vector<Token>::iterator it;
 
