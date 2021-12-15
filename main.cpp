@@ -1,5 +1,6 @@
 #include <bits/stdc++.h>
 
+#include "ast_node.hpp"
 #include "token.hpp"
 
 using namespace std;
@@ -56,8 +57,53 @@ vector<Token> tokenizer(string input) {
   return tokens;
 }
 
+AstNode* traversal(vector<Token>& tokens, int& current) {
+  Token token = tokens[current];
+
+  if (token.type == "number") {
+    ++current;
+    cout << "NumberLiteral" << endl;
+    return new AstNode("NumberLiteral", token.value);
+  }
+
+  if (token.type == "paren" && token.value == "(") {
+    token = tokens[++current];
+
+    cout << "CallExpression start" << endl;
+    AstNode* node =
+        new AstNode("CallExpression", token.value, vector<AstNode*>({}));
+    token = tokens[++current];
+
+    while ((token.type != "paren") ||
+           (token.type == "paren" && token.value != ")")) {
+      node->params.push_back(traversal(tokens, current));
+      token = tokens[current];
+    }
+
+    cout << "CallExpression end" << endl;
+    ++current;
+    return node;
+  }
+}
+
+AstNode* parser(vector<Token> tokens) {
+  int current = 0;
+
+  cout << '\n';
+  cout << "========== Traversal ============" << '\n';
+
+  AstNode* ast = new AstNode("Program");
+  while (current < tokens.size()) {
+    ast->body.push_back(traversal(tokens, current));
+  }
+  cout << "========== End ============" << '\n';
+  cout << '\n';
+
+  return ast;
+};
+
 int main() {
-  vector<Token> tokens = tokenizer("(hello 1 )");
+  vector<Token> tokens = tokenizer("(add 1 )");
 
   vector<Token>::iterator it;
 
@@ -65,6 +111,8 @@ int main() {
     cout << it->type << ' ';
     cout << it->value << '\n';
   }
+
+  AstNode* ast = parser(tokens);
 
   return 0;
 }
