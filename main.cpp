@@ -2,6 +2,7 @@
 
 #include "ast_node.hpp"
 #include "token.hpp"
+#include "transformer.hpp"
 
 using namespace std;
 
@@ -84,6 +85,7 @@ AstNode* traversal(vector<Token>& tokens, int& current) {
     ++current;
     return node;
   }
+  throw runtime_error("Unknown Type: " + token.type);
 }
 
 AstNode* parser(vector<Token> tokens) {
@@ -102,17 +104,60 @@ AstNode* parser(vector<Token> tokens) {
   return ast;
 };
 
-int main() {
-  vector<Token> tokens = tokenizer("(add 1 )");
+string codeGenerator(AstNode* node) {
+  string gencode;
 
-  vector<Token>::iterator it;
-
-  for (it = tokens.begin(); it != tokens.end(); it++) {
-    cout << it->type << ' ';
-    cout << it->value << '\n';
+  if (node->type == "Program") {
+    for (auto item : node->body) {
+      gencode += codeGenerator(item) + "\n";
+    }
+    return gencode;
+  } else if (node->type == "ExpressionStatement") {
+    return codeGenerator(node->expression) + ";";
+  } else if (node->type == "CallExpression") {
+    gencode += codeGenerator(node->callee) + "(";
+    auto arguments = (*node->arguments);
+    for (int i = 0; i < arguments.size(); ++i) {
+      if (i == arguments.size() - 1) {
+        gencode += codeGenerator(arguments[i]);
+      } else {
+        gencode += codeGenerator(arguments[i]) + ",";
+      }
+    }
+    gencode += ")";
+    return gencode;
+  } else if (node->type == "Identifier") {
+    return node->name;
+  } else if (node->type == "NumberLiteral") {
+    return node->name;
+  } else if (node->type == "StringLiteral") {
+    return "\"" + node->name + "\"";
+  } else {
+    throw runtime_error("codeGenerator: unknow astnode type" + node->type);
   }
+}
+
+void printTokens(vector<Token> tokens) {
+  cout << "========= Tokens: ==========" << endl;
+  for (auto to : tokens) {
+    cout << to.type << " " << to.value << endl;
+  }
+  cout << "========== End Of Tokens ==========" << endl;
+}
+
+int main() {
+  vector<Token> tokens = tokenizer("(add 4 (subtract 23 8))");
+
+  printTokens(tokens);
 
   AstNode* ast = parser(tokens);
+
+  Transformer trans(ast);
+  AstNode* new_ast = trans.traversal();
+
+  string generated_code = codeGenerator(new_ast);
+
+  cout << generated_code << '\n';
 
   return 0;
 }

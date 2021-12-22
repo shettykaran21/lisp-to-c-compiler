@@ -17,3 +17,9 @@ AstNode::AstNode(string type, string name, vector<AstNode*> params) {
   this->name = name;
   this->params = params;
 }
+
+AstNode::AstNode(string type, AstNode* callee, vector<AstNode*>* arguments) {
+  this->type = type;
+  this->callee = callee;
+  this->arguments = arguments;
+}
